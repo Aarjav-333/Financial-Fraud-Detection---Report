@@ -1,0 +1,16 @@
+# XGBoost version sweep on the run-A feature matrix (same split, params, seed)
+# columns: version, [accuracy, precision, recall, f1], roc_auc, top-2 gain importances
+2.0.3 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+2.1.0 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+2.1.1 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+2.1.3 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+3.0.0 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+3.0.5 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+3.1.0 [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount')]
+
+3.2.0 (run B, see run_B_latest_pipeline.json): f1 0.8307
+
+# tree_method comparison, XGBoost 2.1.4
+hist [0.8888, np.float64(0.8317), np.float64(0.8297), np.float64(0.8307)] 0.944 [(np.float32(0.2795), 'max_sent_amount'), (np.float32(0.2061), 'max_received_amount'), (np.float32(0.0689), 'total_received')]
+exact [0.892, np.float64(0.8366), np.float64(0.8345), np.float64(0.8356)] 0.9456 [(np.float32(0.3012), 'max_sent_amount'), (np.float32(0.1945), 'max_received_amount'), (np.float32(0.0667), 'total_received')]
+approx [0.8888, np.float64(0.835), np.float64(0.8248), np.float64(0.8299)] 0.9456 [(np.float32(0.2978), 'max_sent_amount'), (np.float32(0.1937), 'max_received_amount'), (np.float32(0.0649), 'total_received')]

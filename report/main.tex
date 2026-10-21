@@ -1,0 +1,156 @@
+% Financial Fraud Detection Using Graph Machine Learning -- MCA project report
+% Aarjav Oravakandi (TVE25MCA-2002), College of Engineering Trivandrum
+% Build: latexmk -xelatex main.tex   (see README.md in the repository root)
+\documentclass[12pt,a4paper,oneside]{report}
+
+% ---------------------------------------------------------------- page and fonts
+\usepackage[a4paper,left=3.5cm,right=2.5cm,top=2.8cm,bottom=2.6cm,
+            headheight=14.5pt,headsep=0.62cm,footskip=0.85cm]{geometry}
+\usepackage{fontspec}
+\usepackage{unicode-math}
+\setmainfont{Liberation Serif}
+\setmonofont{Liberation Mono}[Scale=0.8]
+\setmathfont{Latin Modern Math}
+\linespread{1.241}
+\usepackage{microtype}
+\setlength{\emergencystretch}{2.5em}
+
+% ---------------------------------------------------------------- packages
+\usepackage{graphicx}
+\usepackage{xcolor}
+\usepackage{booktabs}
+\usepackage{tabularx}
+\usepackage{longtable}
+\usepackage{array}
+\usepackage{multirow}
+\usepackage{enumitem}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{float}
+\usepackage{needspace}
+\usepackage{listings}
+\usepackage{titlesec}
+\usepackage{fancyhdr}
+\usepackage{tikz}
+\usetikzlibrary{arrows.meta,positioning,shapes.geometric,shapes.multipart,fit,calc,backgrounds}
+\usepackage[hyphens]{xurl}
+\usepackage[hidelinks,pdfauthor={Aarjav Oravakandi},
+  pdftitle={Financial Fraud Detection Using Graph Machine Learning},
+  pdfsubject={MCA Project Report, College of Engineering Trivandrum}]{hyperref}
+
+\graphicspath{{figures/images/}}
+% TikZ diagrams are set at single spacing so node text keeps its intended size
+\newcommand{\diagram}[1]{{\linespread{1}\selectfont\input{figures/diagrams/#1}}}
+
+% ---------------------------------------------------------------- headings
+\titleformat{\chapter}[display]{\normalfont\bfseries\centering}
+  {\LARGE\chaptertitlename\ \thechapter}{20pt}{\huge}
+\titlespacing*{\chapter}{0pt}{38pt}{36pt}
+\titleformat{name=\chapter,numberless}[display]{\normalfont\bfseries\centering}
+  {}{0pt}{\huge}
+\titlespacing*{name=\chapter,numberless}{0pt}{38pt}{36pt}
+\titleformat{\section}{\normalfont\Large\bfseries}{\thesection}{1em}{}
+\titleformat{\subsection}{\normalfont\large\bfseries}{\thesubsection}{1em}{}
+\titleformat{\subsubsection}{\normalfont\normalsize\bfseries}{}{0pt}{}
+\titlespacing*{\section}{0pt}{3.0ex plus 1ex minus .2ex}{1.6ex plus .2ex}
+\titlespacing*{\subsection}{0pt}{2.6ex plus 1ex minus .2ex}{1.3ex plus .2ex}
+\titlespacing*{\subsubsection}{0pt}{2.2ex plus 1ex minus .2ex}{1.0ex plus .2ex}
+\setcounter{secnumdepth}{2}
+\setcounter{tocdepth}{2}
+
+% ---------------------------------------------------------------- header / footer
+% body pages: rule under an empty header, footer with rule
+\fancypagestyle{main}{\fancyhf{}%
+  \fancyfoot[L]{College of Engineering}\fancyfoot[R]{\thepage}%
+  \renewcommand{\headrulewidth}{0.4pt}\renewcommand{\footrulewidth}{0.4pt}}
+% chapter opening pages: footer only
+\newcommand{\mainplainstyle}{\fancypagestyle{plain}{\fancyhf{}%
+  \fancyfoot[L]{College of Engineering}\fancyfoot[R]{\thepage}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0.4pt}}}
+% front matter: no header or footer at all
+\fancypagestyle{front}{\fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}
+\newcommand{\frontplainstyle}{\fancypagestyle{plain}{\fancyhf{}%
+  \renewcommand{\headrulewidth}{0pt}\renewcommand{\footrulewidth}{0pt}}}
+
+% ---------------------------------------------------------------- captions, lists, tables
+\captionsetup{font=small,labelfont=bf,labelsep=colon,justification=justified,
+  singlelinecheck=true}
+\captionsetup[table]{position=top,skip=6pt}
+\captionsetup[lstlisting]{font=small,labelfont=bf,skip=4pt}
+\setlist[itemize]{leftmargin=1.85em,itemsep=2pt,topsep=4pt,label=\textbullet}
+\setlist[enumerate]{leftmargin=1.85em,itemsep=2pt,topsep=4pt}
+\renewcommand{\arraystretch}{1.08}
+\newcolumntype{L}[1]{>{\raggedright\arraybackslash}p{#1}}
+\newcolumntype{Y}{>{\raggedright\arraybackslash}X}
+
+% ---------------------------------------------------------------- code listings
+\definecolor{codebg}{RGB}{247,247,247}
+\definecolor{codeframe}{RGB}{170,170,170}
+\definecolor{codekw}{RGB}{0,51,153}
+\definecolor{codecomment}{RGB}{110,110,110}
+\definecolor{codestring}{RGB}{163,21,21}
+\lstdefinestyle{report}{
+  basicstyle=\ttfamily\fontsize{8.76}{7.3}\selectfont, % 7.0pt mono at a 9pt pitch
+  backgroundcolor=\color{codebg}, frame=single, rulecolor=\color{codeframe},
+  framesep=3pt, xleftmargin=4pt, xrightmargin=4pt,
+  keywordstyle=\bfseries\color{codekw}, commentstyle=\itshape\color{codecomment},
+  stringstyle=\color{codestring}, showstringspaces=false, columns=fullflexible,
+  keepspaces=true, breaklines=true, breakatwhitespace=true, tabsize=4,
+  upquote=true, aboveskip=8pt, belowskip=6pt,
+  literate={→}{{$\rightarrow$}}1 {—}{{---}}1 {–}{{--}}1 {≥}{{$\geq$}}1}
+\lstdefinelanguage{json}{morestring=[b]", stringstyle=\color{codestring},
+  literate={:}{{\textcolor{black}{:}}}1}
+\lstset{style=report}
+\renewcommand{\lstlistingname}{Listing}
+\renewcommand{\lstlistlistingname}{List of Listings}
+\AtBeginDocument{\counterwithin{lstlisting}{chapter}}
+
+% ---------------------------------------------------------------- shorthands
+% inline code: monospaced, breakable after "_" and "/" so long identifiers wrap
+\ExplSyntaxOn
+\tl_new:N \l__report_code_tl
+\NewDocumentCommand{\code}{m}{
+  \tl_set:Nn \l__report_code_tl {#1}
+  \tl_replace_all:Nnn \l__report_code_tl {\_} {\textunderscore\allowbreak}
+  \tl_replace_all:Nnn \l__report_code_tl {/} {/\allowbreak}
+  \mbox{}{\ttfamily \tl_use:N \l__report_code_tl}
+}
+\ExplSyntaxOff
+
+
+\begin{document}
+
+% ================================================================ front matter
+\pagenumbering{gobble}
+\pagestyle{front}
+\frontplainstyle
+\input{frontmatter/title}
+\input{frontmatter/declaration}
+\input{frontmatter/certificate}
+\input{frontmatter/acknowledgment}
+\input{frontmatter/abstract}
+
+\renewcommand{\contentsname}{Contents}
+\tableofcontents
+\clearpage\phantomsection\addcontentsline{toc}{chapter}{List of Figures}
+\listoffigures
+\clearpage\phantomsection\addcontentsline{toc}{chapter}{List of Tables}
+\listoftables
+
+% ================================================================ main matter
+\clearpage
+\pagenumbering{arabic}
+\pagestyle{main}
+\mainplainstyle
+\input{chapters/ch1_introduction}
+\input{chapters/ch2_problem}
+\input{chapters/ch3_requirements}
+\input{chapters/ch4_design}
+\input{chapters/ch5_coding}
+\input{chapters/ch6_testing}
+\input{chapters/ch7_results}
+\input{chapters/ch8_conclusion}
+\input{bibliography}
+
+\end{document}

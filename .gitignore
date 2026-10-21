@@ -1,0 +1,23 @@
+# LaTeX build output (the compiled report is copied to the repository root)
+report/main.pdf
+*.aux
+*.log
+*.toc
+*.lof
+*.lot
+*.lol
+*.out
+*.fls
+*.fdb_latexmk
+*.synctex.gz
+*.xdv
+*.bbl
+*.blg
+
+# Python / editor clutter
+__pycache__/
+*.pyc
+.venv/
+venv/
+.DS_Store
+Thumbs.db

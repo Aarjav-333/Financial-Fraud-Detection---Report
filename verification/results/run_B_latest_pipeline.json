@@ -1,0 +1,108 @@
+{
+  "python": "3.11.17",
+  "platform": "Linux-6.18.44-fc-v139-x86_64-with-glibc2.39",
+  "timings_s": {
+    "preprocessing_clean": 0.62,
+    "rules": 6.26,
+    "graph_analysis": 5.03,
+    "features": 1.26,
+    "ml_train": 2.73,
+    "alerts": 0.14,
+    "rings": 0.83,
+    "pipeline_total": 16.87
+  },
+  "rule_engine": {
+    "flagged": 2565,
+    "tp": 2562,
+    "fp": 3,
+    "fn": 101,
+    "precision": 0.9988,
+    "recall": 0.9621,
+    "rule_hits_total": 2979,
+    "hits_per_rule": {
+      "large_amount": 60,
+      "rapid_transactions": 1567,
+      "new_account_large": 129,
+      "fan_in": 642,
+      "fan_out": 413,
+      "circular": 168
+    }
+  },
+  "baseline": {
+    "train_size": 3750,
+    "test_size": 1250,
+    "class_balance": {
+      "fraud_in_train": 1234,
+      "legit_in_train": 2516
+    },
+    "results": {
+      "random_forest": {
+        "accuracy": 0.8832,
+        "precision": 0.8162,
+        "recall": 0.8321,
+        "f1": 0.8241,
+        "roc_auc": 0.9446
+      },
+      "xgboost": {
+        "accuracy": 0.8888,
+        "precision": 0.8317,
+        "recall": 0.8297,
+        "f1": 0.8307,
+        "roc_auc": 0.944
+      },
+      "isolation_forest": {
+        "accuracy": 0.7064,
+        "precision": 0.5531,
+        "recall": 0.5572,
+        "f1": 0.5552,
+        "roc_auc": 0.7594
+      }
+    },
+    "best_model": "xgboost",
+    "top_features": [
+      {
+        "feature": "max_sent_amount",
+        "importance": 0.2795
+      },
+      {
+        "feature": "max_received_amount",
+        "importance": 0.2061
+      },
+      {
+        "feature": "total_received",
+        "importance": 0.0689
+      },
+      {
+        "feature": "pagerank",
+        "importance": 0.0553
+      },
+      {
+        "feature": "avg_received_amount",
+        "importance": 0.039
+      },
+      {
+        "feature": "total_sent",
+        "importance": 0.0389
+      },
+      {
+        "feature": "txn_count_received",
+        "importance": 0.0387
+      },
+      {
+        "feature": "avg_sent_amount",
+        "importance": 0.0382
+      }
+    ],
+    "accounts_scored": 5000
+  },
+  "rings": {
+    "count": 52,
+    "members": 1699,
+    "fraud_members": 1644,
+    "purity": 0.9676,
+    "size_min": 17,
+    "size_max": 54,
+    "size_median": 31.0,
+    "high_risk": 52
+  }
+}

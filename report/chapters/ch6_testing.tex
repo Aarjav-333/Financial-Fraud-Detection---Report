@@ -1,0 +1,149 @@
+\chapter{Testing and Validation}
+
+This chapter documents the testing strategy employed across the development lifecycle of Financial Fraud Detection Using Graph Machine Learning, covering unit tests, integration tests, alpha and beta testing phases, and the test cases the suite verifies. The project employs an automated test suite built with \textbf{pytest} and FastAPI's \code{TestClient}. Tests live in a \code{tests/} directory at the backend root and are run with \code{pytest} from there. Rather than mocking the application apart, most tests drive the real routers, dependencies, ORM session and services together against a temporary SQLite database created fresh for each test, so no run depends on another. The email tests deliver to a local \code{aiosmtpd} server, so SMTP behaviour is exercised rather than stubbed out.
+
+\section{Testing Methods}
+
+\subsection{Unit Testing}
+Unit tests verify the behaviour of individual modules against a deterministic fixture dataset built in \code{conftest.py} --- small enough that every expected outcome can be checked by hand.
+
+\begin{table}[H]
+\centering
+\caption{Unit Test Files and Coverage Areas}
+\label{tab:unittests}
+\small
+\begin{tabular}{@{}L{5.2cm}L{6.6cm}@{}}
+\toprule
+\textbf{Test File} & \textbf{Coverage Area} \\
+\midrule
+\code{test\_migrations.py} & Schema migration against an existing database and against a fresh one, with existing rows preserved \\
+\code{test\_accounts.py} & Risk level is written by the rule engine alone; the onboarding category is manual and affects nothing else \\
+\code{test\_fraud\_review.py} & Status transition rules, confirmation, clearing, and the audit event each one writes \\
+\code{test\_model\_analytics.py} & Reported model metrics recomputed from the stored test predictions \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Integration Testing}
+Integration tests verify that multiple modules collaborate correctly across the API boundary:
+
+\begin{table}[H]
+\centering
+\caption{Integration Test Files}
+\label{tab:inttests}
+\small
+\begin{tabular}{@{}L{5.2cm}L{6.6cm}@{}}
+\toprule
+\textbf{Test File} & \textbf{Coverage Area} \\
+\midrule
+\code{test\_email.py} & Account-holder email: delivery, no duplicates, mail server down, SMTP unconfigured, missing address \\
+\code{test\_notifications.py} & Real-time push, persistence across sessions, retries, disconnect catch-up, stream authorisation, token expiry \\
+\code{test\_standalone\_demo.py} & The scripted scenario run end to end through the real rule engine, graph analysis, alerts and ring detection \\
+\code{test\_review\_fixes.py} & Regression tests, one or two per defect found in code review \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Alpha Testing}
+Alpha testing was conducted internally by the development team. The following scenarios were verified:
+
+\begin{itemize}
+  \item Uploading a transaction CSV and confirming that malformed rows are rejected with a readable error rather than being silently dropped.
+  \item Running all six rules over the full dataset and checking that each generated alert carries the rule code and a human-readable reason.
+  \item Running graph analysis and verifying that PageRank and community assignments are persisted for every account.
+  \item Training the classical models and the graph neural networks, and confirming that the reported metrics are computed on a held-out split and not on the training data.
+  \item Inspecting a detected fraud ring in the graph view and confirming that the member roles shown match the direction and size of the money flowing between them.
+  \item Confirming an account as fraudulent and checking that the status event, the queued email, the notification and the alert all appear exactly once.
+  \item Re-running a single pipeline stage and confirming that the other stages' results are preserved.
+\end{itemize}
+
+\subsection{Beta Testing}
+Beta testing was informal. The system was deployed publicly --- the FastAPI backend on Render's free tier and the React client on Vercel --- and classmates were asked to use the analyst console without guidance beyond the login credentials. No structured questionnaire was administered and no formal usability metrics were collected, so this phase is reported as exploratory defect discovery rather than as a user study. Three defects reached the deployed build and were found this way:
+
+\begin{enumerate}
+  \item \textbf{Cross-origin rejection.} The backend returned a correct 200 response to the login request, which the browser then discarded because the configured allowed origin did not match the client's. Corrected by normalising each configured origin to \code{scheme://host:port} before comparison.
+  \item \textbf{Rule-engine timeout.} The rule stage exceeded the client's request timeout on the full 80,000-transaction dataset. Corrected by rewriting the fan-in and fan-out rules as a single pass over a sliding window, reducing that stage from 26.9 to 4.6 seconds.
+  \item \textbf{Database loss between deployments.} The free-tier container's filesystem is ephemeral, so the database did not survive a redeploy. Corrected by re-seeding the bundled dataset at start-up when the database is found empty.
+\end{enumerate}
+
+\Needspace{12\baselineskip}
+\section{Test Cases}
+\begingroup
+\small
+\setlength{\LTcapwidth}{\textwidth}
+\begin{longtable}{@{}L{1.0cm}L{2.9cm}L{3.5cm}L{3.5cm}L{1.3cm}@{}}
+\caption{Test Cases}\label{tab:testcases}\\
+\toprule
+\textbf{TC\#} & \textbf{Test Scenario} & \textbf{Input / action} & \textbf{Expected Output} & \textbf{Result} \\
+\midrule
+\endfirsthead
+\multicolumn{5}{@{}l}{\textit{Table~\thetable\ --- continued from the previous page}}\\[2pt]
+\toprule
+\textbf{TC\#} & \textbf{Test Scenario} & \textbf{Input / action} & \textbf{Expected Output} & \textbf{Result} \\
+\midrule
+\endhead
+\midrule
+\multicolumn{5}{r@{}}{\textit{continued on the next page}}\\
+\endfoot
+\bottomrule
+\endlastfoot
+TC01 & Schema migration & Start up against a pre-existing database & New tables and columns added; existing rows preserved & Pass \\
+TC02 & Fresh database & Start up with no database file & Full schema created from scratch & Pass \\
+TC03 & New account risk level & Create an account & Risk level starts at Low & Pass \\
+TC04 & Risk level is not editable & Attempt to set risk level through the account form & The submitted value is ignored; only the rule engine writes it & Pass \\
+TC05 & Onboarding category is separate & Set and then clear the onboarding risk category & Stored and cleared without affecting risk level, rules or scores & Pass \\
+TC06 & Rule engine sets risk & Run the rules over a crafted dataset & Risk level raised on the accounts the rules hit; onboarding category untouched & Pass \\
+TC07 & Analyst confirms fraud & Analyst confirms a suspicious account & Status becomes Confirmed Fraud; a status event records who, when and why & Pass \\
+TC08 & ML score is not a confirmation & A high model score is written to an account & The account stays Suspicious; only a human decision confirms & Pass \\
+TC09 & Status transition rules & Attempt each transition from each status & Only the permitted transitions are accepted & Pass \\
+TC10 & Authorisation on review & A non-analyst account calls the review endpoint & 403 Forbidden & Pass \\
+TC11 & Account-holder email & Confirmation on an account with a valid address & Exactly one email queued and delivered to the local SMTP server & Pass \\
+TC12 & No duplicate email & The same confirmation submitted twice & Nothing changes; no second email & Pass \\
+TC13 & Mail server down & Confirm while the SMTP server is unreachable & The confirmation still stands; the failure is logged and can be retried & Pass \\
+TC14 & SMTP not configured & Confirm with no mail host set & Confirmation succeeds; the email is logged as not configured & Pass \\
+TC15 & No usable address & Confirm an account with no email address & Email skipped, not failed & Pass \\
+TC16 & Real-time alert & A confirmed-fraud account sends a new transaction & High-priority alert stored and pushed to every open notification stream & Pass \\
+TC17 & Only confirmed accounts notify & An unconfirmed suspicious account transacts & No notification raised & Pass \\
+TC18 & Notification persistence & Client logs out and back in & Stored notifications re-read from the database and redelivered & Pass \\
+TC19 & Disconnect catch-up & Client disconnects, then reconnects & Missed notifications delivered on reconnection & Pass \\
+TC20 & Stream authorisation & Open the notification stream without an analyst role & Stream refused & Pass \\
+TC21 & Token expiry closes stream & Hold a stream open until the token expires & Stream closed by the server & Pass \\
+TC22 & Model analytics correctness & Request analytics for a trained model & Reported metrics match those recomputed from the stored test predictions & Pass \\
+TC23 & Missing results reported & Request analytics with no stored results & The absence is reported rather than fabricated & Pass \\
+TC24 & Analytics authorisation & A non-analyst requests model analytics & 403 Forbidden & Pass \\
+TC25 & GNN comparison on one split & Train GCN and GraphSAGE & Both evaluated on the same test split & Skipped \\
+TC26 & Demo scenario planting & Build the standalone demo database & Exactly the 22 scripted accounts and 22 transactions, and nothing else & Pass \\
+TC27 & Demo triggers every rule & Run the rule engine over the demo database & All six rules R1--R6 fire, each on its intended stage & Pass \\
+TC28 & Demo ring detection & Run graph analysis and ring detection on the demo & The mule network is recovered as a ring with roles assigned & Pass \\
+\end{longtable}
+\endgroup
+
+\section{Test Execution Results}
+Table~\ref{tab:testcases} documents 28 test scenarios --- the behaviours the suite is designed to establish, written for a reader. These are not in one-to-one correspondence with the automated test functions: a single scenario may be covered by several functions (and a few functions are parameterised, so one function contributes more than one executed test). The suite as executed collects 59 tests. The two counts describe the same body of work at different granularities and should not be added together.
+
+The suite was executed in full against the current build with \code{pytest -q}. The outcome is summarised in Table~\ref{tab:testrun}. It was executed again during the final verification of this report, on a fresh checkout of commit \code{3800cc1} under Python 3.11.17 on Linux, and gave the same result --- 57 passed and 2 skipped --- with the same per-file counts.
+
+\begin{table}[H]
+\centering
+\caption{Test Suite Execution Summary}
+\label{tab:testrun}
+\small
+\begin{tabular}{@{}L{4.4cm}L{4.6cm}rL{2.4cm}@{}}
+\toprule
+\textbf{Test File} & \textbf{Covers} & \textbf{Tests} & \textbf{Result} \\
+\midrule
+\code{test\_migrations.py} & Schema upgrade and fresh creation & 2 & 2 passed \\
+\code{test\_accounts.py} & Risk level and onboarding category & 8 & 8 passed \\
+\code{test\_fraud\_review.py} & Confirmation, transitions, authorisation & 5 & 5 passed \\
+\code{test\_email.py} & Holder email and its failure modes & 8 & 8 passed \\
+\code{test\_notifications.py} & Real-time alerting and stream behaviour & 7 & 7 passed \\
+\code{test\_model\_analytics.py} & Reported metrics and authorisation & 5 & 3 passed, 2 skipped \\
+\code{test\_review\_fixes.py} & Code-review regressions & 10 & 10 passed \\
+\code{test\_standalone\_demo.py} & The scripted scenario end to end & 14 & 14 passed \\
+\midrule
+\textbf{Total} & & \textbf{59} & \textbf{57 passed, 2 skipped} \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+No test failed. The two skipped tests both belong to the graph-neural-network comparison in \code{test\_model\_analytics.py}; they skip automatically when PyTorch Geometric is absent from the environment running the suite, so that the analytics for a model which was never evaluated are not reported as though they had been. Installing the optional GNN requirements enables them; they were not enabled in either run recorded here, so TC25 has not been exercised by the automated suite.

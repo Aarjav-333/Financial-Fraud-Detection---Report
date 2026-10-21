@@ -1,0 +1,169 @@
+\chapter{Requirement Analysis}
+
+This chapter outlines the complete requirements for the system, covering both hardware and software prerequisites, the functional capabilities the system must deliver, and non-functional constraints including performance, security, reliability and scalability.
+
+\section{Purpose}
+The purpose of this system is to detect coordinated financial fraud that transaction-level analysis cannot identify, by modelling the transaction history as a graph and applying rule-based checks, structural graph analysis and machine learning over that representation. The system is intended to be operated by a fraud analyst through a web interface, and to carry every detection through to a documented investigation outcome.
+
+\section{Overall Description}
+The system consists of two deployable components:
+
+\begin{enumerate}
+  \item \textbf{Backend Service}: A Python FastAPI application exposing a REST API. All data preprocessing, rule evaluation, graph construction, feature engineering, model training and scoring, alert generation and report generation occur in this service.
+  \item \textbf{Frontend Application}: A React single-page application built with Vite and Material UI that communicates with the backend over HTTPS and presents the analyst-facing interface for every module.
+\end{enumerate}
+
+\subsection{Hardware Requirements}
+\begin{table}[H]
+\centering
+\caption{Minimum Hardware Requirements}
+\label{tab:hardware}
+\small
+\begin{tabular}{lll}
+\toprule
+\textbf{Component} & \textbf{Minimum} & \textbf{Recommended} \\
+\midrule
+CPU     & 2-core x86-64 & 4-core x86-64 \\
+RAM     & 4 GB          & 8 GB \\
+Storage & 2 GB free     & 10 GB free \\
+Display & 1366 $\times$ 768 & 1920 $\times$ 1080 \\
+Network & 10 Mbps       & 100 Mbps \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Software Requirements}
+\begin{table}[H]
+\centering
+\caption{Software Requirements}
+\label{tab:software}
+\small
+\begin{tabularx}{\textwidth}{L{3.6cm}L{2.9cm}Y}
+\toprule
+\textbf{Software} & \textbf{Version} & \textbf{Role} \\
+\midrule
+Python            & 3.10 or later & Backend runtime \\
+FastAPI           & 0.111         & REST API framework \\
+Uvicorn           & 0.30          & ASGI server \\
+SQLAlchemy        & 2.0           & Object-relational mapping \\
+SQLite            & stdlib        & Relational data store \\
+NetworkX          & 3.2           & Graph construction and analysis \\
+scikit-learn      & 1.5           & Random Forest, Isolation Forest \\
+XGBoost           & 2.1           & Gradient-boosted classifier \\
+PyTorch           & 2.2 or later  & Deep learning runtime for the GNNs \\
+PyTorch Geometric & 2.5 or later  & GCN and GraphSAGE layers, Elliptic dataset \\
+pandas            & 2.2           & Data manipulation \\
+ReportLab         & 4.1           & PDF report generation \\
+pytest            & 8.0 or later  & Automated test suite \\
+aiosmtpd          & 1.4 or later  & Local SMTP server used by the email tests \\
+React             & 18            & Frontend library \\
+Vite              & 5.x           & Frontend build tool \\
+Material UI       & 5.x           & Component library \\
+Operating System  & Windows / Linux / macOS & Development and deployment \\
+\bottomrule
+\end{tabularx}
+\par\vspace{3pt}
+\begin{minipage}{\textwidth}\footnotesize
+The versions are the minimums declared in \code{backend/requirements*.txt}, which uses \code{>=} constraints; the exact versions installed for a given run are not pinned (Section~\ref{sec:repro}).
+\end{minipage}
+\end{table}
+
+\section{Functional Requirements}
+The system shall fulfil the following functional requirements:
+
+\begin{itemize}
+  \item Authenticate users with a username and password and issue a session token.
+  \item Store, list, search and filter customer accounts and transaction records.
+  \item Detect and report data-quality issues including missing values, duplicate records and invalid account references.
+  \item Evaluate every transaction against six business-logic fraud rules and mark matching transactions as suspicious.
+  \item Construct a directed transaction graph from account and transaction data.
+  \item Compute PageRank, degree centrality, community membership and cycle membership for every account.
+  \item Generate a seventeen-attribute feature vector for every account.
+  \item Train Random Forest, XGBoost and Isolation Forest models and persist the best-performing model.
+  \item Train Graph Convolutional Network and GraphSAGE models directly on the account graph, and evaluate them on an independent public benchmark.
+  \item Assign a fraud probability score to every account, and set its risk level from the rule engine alone.
+  \item Generate fraud alerts from rule violations and from accounts exceeding a configurable score threshold.
+  \item Group connected suspicious accounts into fraud rings and assign member roles.
+  \item Allow an analyst to place an account under review, confirm it as fraudulent or clear it, and record every such decision with its author, timestamp and reason.
+  \item Raise a high-priority alert and push a real-time notification when an account an analyst has confirmed as fraudulent sends a further transaction.
+  \item Notify the holder of a confirmed fraudulent account by email, logging every delivery attempt and its outcome.
+  \item Create and manage investigation cases with notes, an assigned officer and a status lifecycle.
+  \item Present aggregate statistics and charts on a dashboard.
+  \item Export a PDF summary report and CSV extracts of key tables.
+  \item Provide a scripted demonstration dataset that exercises all six rules end to end without disturbing the working data.
+\end{itemize}
+
+\subsection{Python and FastAPI}
+Python is the primary language for the backend. It was chosen for the maturity of its data and machine learning ecosystem---pandas, scikit-learn~\cite{pedregosa2011}, XGBoost~\cite{chen2016} and NetworkX~\cite{hagberg2008} are all first-class Python libraries---which allows the entire detection pipeline to be written in a single language without inter-process data exchange.
+
+FastAPI~\cite{fastapi} provides the HTTP layer. It was selected for its native async/await support, automatic OpenAPI documentation, Pydantic-based request validation, and its dependency injection system, which allows authentication to be applied declaratively to every protected route rather than repeated in each handler.
+
+\subsection{NetworkX and Graph Algorithms}
+NetworkX~\cite{hagberg2008} provides the graph data structure and the algorithm implementations that form the core of the project. A directed graph is built with accounts as nodes and transactions as weighted edges, and four classes of analysis are run over it: PageRank for structural importance, degree centrality for counterparty breadth, Louvain community detection for cluster isolation, and cycle detection for closed money loops. NetworkX was chosen over a dedicated graph database because the graph is rebuilt from relational data on demand, requires no separate server process, and fits comfortably in memory at the scale of this project. The PageRank implementation additionally requires SciPy for its sparse-matrix solver.
+
+\subsection{PyTorch Geometric and Graph Neural Networks}
+NetworkX supplies structure as explicit, hand-chosen measurements. PyTorch Geometric~\cite{fey2019} supplies the complementary approach: a Graph Convolutional Network and a GraphSAGE model that learn their own representation of an account from the accounts it transacts with, through two rounds of message passing. It was chosen because it provides reference implementations of both architectures~\cite{kipf2017,hamilton2017} over a common data format, and because it ships a loader for the Elliptic Bitcoin dataset~\cite{weber2019}, which the project uses as an independent benchmark. PyTorch runs on the CPU here; no GPU is required at this scale. The dependency is kept in a separate requirements file because it is a large download, and the application degrades gracefully when it is absent: the graph-neural-network pages report that the dependency is missing rather than failing.
+
+\subsection{SQLite and SQLAlchemy}
+SQLite is used as the relational data store. It is an embedded database requiring no separate server process, which keeps deployment simple, and it is well suited to the read-heavy, single-writer access pattern of this system.
+
+All database access is mediated by the SQLAlchemy ORM~\cite{sqlalchemy}. Application code queries Python model classes rather than writing SQL strings, and SQLAlchemy generates the dialect-appropriate SQL. This keeps the application code largely independent of the specific engine: the model classes and queries would not need rewriting to move to a production engine such as PostgreSQL. The ORM reduces, but does not eliminate, the work involved. A migration would still require installing and configuring the appropriate driver, creating the schema on the new engine and migrating existing data, reviewing the handful of places where SQLite's permissive typing differs from a strictly typed engine, and re-running the test suite against it. The ORM also removes a class of SQL injection risk, since parameters are bound rather than interpolated.
+
+\subsection{React and Material UI}
+The frontend is a React single-page application built with Vite. React was chosen for its component model, which maps cleanly onto the system's eighteen distinct pages, and for the maturity of its ecosystem. Vite provides fast development builds and an optimised production bundle. Material UI supplies the component library---tables, dialogs, cards and form controls---giving a consistent interface without hand-written styling, and Recharts renders the dashboard visualisations. Axios handles HTTP communication, with an interceptor that attaches the authentication token to every outgoing request.
+
+\subsection{Fraud Rule Specification}\label{sec:rulespec}
+Table~\ref{tab:rules} states the six rules exactly as implemented in \code{app/ml/rules.py}. All monetary thresholds are in Indian rupees (Rs.). They were chosen to produce a workable alert volume on the synthetic dataset and are demonstration values: they are modelled on common anti-money-laundering typologies but are not statutory reporting thresholds, and no claim of regulatory compliance is made for them.
+
+Indian reporting obligations are not a single figure that R1 could be compared against. Under the Prevention of Money Laundering (Maintenance of Records) Rules, a reporting entity files a cash transaction report for cash transactions above Rs.~10,00,000, a cross-border wire transfer report above Rs.~5,00,000, and a suspicious transaction report with no monetary threshold at all --- suspicion alone is the trigger, whether or not cash is involved~\cite{fiuindia}. R1 is closer in spirit to the last of these than to the first: it raises suspicion, it does not discharge a reporting duty, and its Rs.~1,00,000 figure applies to every transaction type in the dataset rather than to cash alone. A deployment would have to set each threshold against the specific obligation and channel it serves.
+
+\begin{table}[H]
+\centering
+\caption{Implemented Fraud Rules}
+\label{tab:rules}
+\footnotesize
+\begin{tabularx}{\textwidth}{@{}L{0.55cm}L{2.75cm}L{3.45cm}L{2.7cm}Y@{}}
+\toprule
+\textbf{ID} & \textbf{Internal name} & \textbf{Detection logic} & \textbf{Threshold / window} & \textbf{Pattern identified} \\
+\midrule
+R1 & \code{large\_amount} & A single transaction whose amount exceeds the configured large-amount threshold & amount $>$ Rs.~1,00,000 & A large transfer made in one movement \\
+R2 & \code{rapid\_transactions} & One sender making an unusual burst of transfers in a short window & $>$ 5 transactions in 10 minutes & Rapid dispersal before an account can be frozen \\
+R3 & \code{new\_account\_large} & A recently opened account receiving a large credit & account age $<$ 30 days and amount $\geq$ Rs.~50,000 & A freshly opened mule account being funded \\
+R4 & \code{fan\_in} & Many distinct senders paying into one account within a window (M $\rightarrow$ 1) & $\geq$ 8 distinct senders in 1 hour & Collection of funds into a consolidating account \\
+R5 & \code{fan\_out} & One account paying many distinct receivers within a window (1 $\rightarrow$ M) & $\geq$ 8 distinct receivers in 1 hour & Dispersal of funds across cash-out accounts \\
+R6 & \code{circular} & Money returning to its origin through two intermediate accounts (A $\rightarrow$ B $\rightarrow$ C $\rightarrow$ A) & each hop within 48 hours of the previous hop & Layering through shell accounts \\
+\bottomrule
+\end{tabularx}
+\end{table}
+
+For every match the engine marks the transaction \code{status = "suspicious"}, writes a row to the \code{rule\_hits} table recording which rule fired on which transaction, and raises the risk level of the accounts involved to Medium, or to High where two or more distinct rules have fired. The rule engine is the only component that writes an account's risk level; model scores never alter it. R6 examines three-hop loops only, and because each hop is timed against the one before it, a complete loop may span up to 96 hours. Two-account loops, and loops irrespective of timing, are represented instead by the \code{in\_cycle} graph feature (Table~\ref{tab:features}).
+
+\section{Non-Functional Requirements}
+
+\subsection{Performance Requirements}
+\begin{itemize}
+  \item Response time for simple read endpoints must remain under 500 ms on recommended hardware.
+  \item Graph construction and analysis over a 5,000-node graph must complete in seconds.
+  \item The rule engine must process the full 80,000-transaction dataset within two minutes.
+  \item Account and transaction listings must be paginated so that response size remains bounded regardless of dataset size.
+\end{itemize}
+
+\subsection{Security Requirements}
+\begin{itemize}
+  \item All endpoints handling protected application data require a valid bearer token, with two explicitly documented exceptions: the health check at \code{GET /} and the system-information endpoint at \code{GET /api/system/info}, which returns a configuration flag and no application data. The login endpoint itself is necessarily unauthenticated. Accounts, transactions, alerts, rings, cases, investigation records, dashboards, reports and all model and graph analytics are protected; Section~\ref{sec:authz} lists the dependencies that enforce this.
+  \item Opening an account's investigation record, changing its fraud status, retrying an account-holder email, receiving fraud notifications and reading the model evaluation analytics are restricted to the administrator and analyst roles.
+  \item The application refuses to start in a production configuration whose signing key, administrator password or mail transport is left at an insecure default.
+  \item Passwords are stored as salted hashes and never in plaintext.
+  \item Cross-origin requests are accepted only from an explicitly configured allow-list.
+  \item Secrets such as the token signing key and the administrator credentials are read from environment variables, never from source control.
+  \item All database access passes through the ORM with bound parameters, eliminating string-interpolated SQL.
+\end{itemize}
+
+\subsection{Reliability and Scalability}
+\begin{itemize}
+  \item Re-running a detection stage must not duplicate alerts already recorded.
+  \item Computed graph metrics are persisted so that expensive analysis runs once and is then read many times by the stages that depend on it.
+  \item If the database is found empty at startup, the baseline dataset is seeded automatically so the application is never left unusable.
+  \item The architecture must permit SQLite to be replaced by a production-grade database without changes to the API contract or the query code.
+  \item Every alert and case retains a creation timestamp and status to support audit.
+\end{itemize}
