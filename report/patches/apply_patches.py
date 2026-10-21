@@ -163,6 +163,28 @@ new = first_line(P[9])
 redact(pg, old + (-1, -1, 1, 1))
 place(pg, 9, (old.x0 + old.x1) / 2 - (new.x0 + new.x1) / 2, old.y0 - new.y0)
 
+# P11 -- footer: "College of Engineering" becomes "College of Engineering Trivandrum" on
+# every page that carries the footer (PDF pages 12-78). Nothing is removed or rewritten:
+# the word "Trivandrum" is added after the existing text (the fragment reserves the width
+# of "College of Engineering" invisibly), on the same baseline. Redacting the old footer
+# would re-encode the whole page stream and nudge some glyphs by a fraction of a point.
+def baseline(page):
+    for b in page.get_text("rawdict")["blocks"]:
+        for l in b.get("lines", []):
+            return l["spans"][0]["origin"][1]
+
+frag_base = baseline(P[10])
+footers = 0
+for i, pg in enumerate(doc):
+    hits = [box for box, text in lines(ref[i]) if box.y0 > 775 and text == "College of Engineering"]
+    for old in hits:
+        old_base = [s["origin"][1] for b in ref[i].get_text("rawdict", clip=old + (-1, -1, 1, 1))["blocks"]
+                    for l in b.get("lines", []) for s in l["spans"]][0]
+        place(pg, 10, DX, old_base - frag_base)
+        footers += 1
+assert footers == 67, footers
+print(f"footers extended: {footers}")
+
 # Outline: the bookmarks of the input may point at named destinations that no longer
 # resolve after earlier page swaps, so rebuild them with explicit page numbers taken from
 # a PDF whose outline is intact (the originally uploaded report has the same pagination).
