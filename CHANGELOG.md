@@ -1,5 +1,12 @@
 # Changelog
 
+## Declaration update — 21 October 2026
+
+- Page 2 (Declaration): the project title is set in bold, and the supervision
+  line now reads "under the supervision of **Dr. Liji P I**, Assistant
+  Professor" (name in bold). Nothing else in the report changed; page 2 keeps
+  its line positions, and the outline and links are untouched.
+
 ## Diagram and wording corrections — 21 October 2026
 
 Applied to the 78-page submission copy on `main` (with the HOD, Principal and

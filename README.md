@@ -6,7 +6,8 @@ Applications**.
 
 - **Student:** Aarjav Oravakandi (TVE25MCA-2002)
 - **Department:** Department of Computer Applications, College of Engineering Trivandrum
-- **Supervisor:** Dr. Haripriya A P, Head of the Department
+- **Supervisor:** Dr. Liji P I, Assistant Professor
+- **Head of the Department:** Dr. Haripriya A P
 - **Submission:** November 2026
 
 The report describes a fraud detection system that models a transaction
