@@ -1,5 +1,15 @@
 # Changelog
 
+## Name update — 21 October 2026
+
+- Head of the Department (and project supervisor, as the report already
+  described the HOD) changed from Dr. Liji P I to **Dr. Haripriya A P** in the
+  declaration, the acknowledgment and the README.
+- Principal changed from Dr. Suresh K to **Dr. Joseph Zacharias** in the
+  acknowledgment.
+- The acknowledgment sentence for the Head of the Department no longer uses a
+  pronoun.
+
 ## Final revision — 21 October 2026
 
 Baseline: the 78-page `… - FINAL.pdf` uploaded on 21 October 2026 (commit
