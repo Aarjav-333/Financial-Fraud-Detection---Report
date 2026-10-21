@@ -155,6 +155,14 @@ pg = doc[1]
 redact(pg, pg.rect, graphics=True)
 pg.show_pdf_page(pg.rect, P, 8)
 
+# P10 -- cover page date (PDF page 1): only the date line changes; the new line is
+# centred on the old one's axis and set on the same baseline
+pg = doc[0]
+old = ref[0].search_for("November 2026")[0]
+new = first_line(P[9])
+redact(pg, old + (-1, -1, 1, 1))
+place(pg, 9, (old.x0 + old.x1) / 2 - (new.x0 + new.x1) / 2, old.y0 - new.y0)
+
 # Outline: the bookmarks of the input may point at named destinations that no longer
 # resolve after earlier page swaps, so rebuild them with explicit page numbers taken from
 # a PDF whose outline is intact (the originally uploaded report has the same pagination).
