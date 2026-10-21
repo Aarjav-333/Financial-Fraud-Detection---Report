@@ -1,0 +1,13 @@
+% Figure 4.1 -- high-level system architecture (layers top to bottom)
+\begin{tikzpicture}[
+  layer/.style={draw, thin, minimum width=12.4cm, minimum height=0.62cm, align=center,
+                font=\footnotesize, inner sep=3pt},
+  arr/.style={-{Stealth[length=2mm]}, thin}]
+  \node[layer] (c) {Client Layer: React + Vite SPA \quad$|$\quad Material UI \quad$|$\quad REST Client};
+  \node[layer, below=0.38cm of c] (a) {Authentication Layer: \texttt{/api/auth} --- OAuth2 password flow, JWT bearer\\token, \texttt{get\_current\_user} dependency guarding every protected router};
+  \node[layer, below=0.38cm of a] (g) {API Gateway (FastAPI), 18 routers: \texttt{/accounts /transactions}\\\texttt{/preprocessing /rules /graph /features /ml /gnn /alerts /rings}\\\texttt{/cases /dashboard /reports /notifications /system /demo}};
+  \node[layer, below=0.38cm of g] (d) {Detection Pipeline: Rule Engine $\rightarrow$ Graph Analysis $\rightarrow$ Feature Engineering\\$\rightarrow$ ML Scoring $\rightarrow$ GNN (optional)};
+  \node[layer, below=0.38cm of d] (b) {Backend Services: NetworkX Graph \quad Model Store \quad Alert \& Ring Builder\\Analyst Review \quad Notifier \& Mailer \quad Report Generator};
+  \node[layer, below=0.38cm of b] (p) {Persistence Layer: SQLite via SQLAlchemy ORM};
+  \foreach \x/\y in {c/a,a/g,g/d,d/b,b/p} \draw[arr] (\x) -- (\y);
+\end{tikzpicture}

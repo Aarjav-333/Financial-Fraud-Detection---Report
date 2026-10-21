@@ -1,0 +1,1 @@
+Python 3.11.17; Linux 6.18.44-fc-v139 x86_64; 4 vCPU; Intel(R) Xeon(R) Processor @ 2.80GHz

@@ -1,0 +1,47 @@
+\chapter{Problem Definition and Motivation}
+
+This chapter examines the shortcomings of current fraud detection practice that motivated the development of this system. It defines the problem of transaction-level, relationship-blind fraud detection and presents the proposed graph-based solution along with its key design advantages.
+
+\section{Existing System}
+Operational fraud monitoring commonly combines three approaches. The characterisation below describes the conventional, transaction-focused configuration of each; it is not a claim that no deployed system performs relationship analysis. Graph-based detection is an established research area and is used in practice~\cite{pourhabibi2020}, and the contribution of this project lies in integration rather than in originating the approach.
+
+\textbf{Manual review} places flagged transactions in front of a human analyst. It is accurate and accountable, but it does not scale: an institution processing millions of transactions cannot staff enough analysts to inspect a meaningful fraction of them, and review queues grow faster than they can be cleared.
+
+\textbf{Threshold-based rule engines} encode fixed limits---for example, flagging any transfer above a set amount. They are transparent and easy to audit, which is why they remain universal, but they are also entirely predictable. A fraudster who learns where a limit sits can stay just beneath it indefinitely.
+
+\textbf{Transaction-level machine learning models} score each transaction or each account from its own history: amounts, frequencies, timing. These models adapt to patterns that no analyst thought to write a rule for, but where the feature set is limited to a record's own attributes the relationships between records cannot inform the score. Two accounts with identical transaction statistics then receive identical treatment, even if one sits at the centre of a fraud ring and the other does not. Class imbalance compounds the difficulty, as Bolton and Hand~\cite{bolton2002} observe.
+
+\subsection{Limitations of Existing System}
+\begin{enumerate}
+  \item \textbf{Relationship Blindness}: Where records are evaluated one at a time, coordination between accounts is not represented in the model's input. The defining characteristic of organised fraud is then unavailable to the detector.
+  \item \textbf{Predictable Thresholds}: Fixed numeric limits are trivially evaded. A rule that flags transfers above a stated amount is defeated by transferring slightly less.
+  \item \textbf{No Ring-Level View}: Even when several accounts in a ring are individually flagged, nothing links those alerts together. The analyst sees scattered incidents rather than one coordinated operation.
+  \item \textbf{High False Positive Volume}: Broad rules generate large alert volumes with no prioritisation, so genuinely serious cases compete for attention with routine ones.
+  \item \textbf{Class Imbalance}: Fraudulent transactions form a very small fraction of total volume --- 3.33\% in the dataset used here. Models trained without explicit imbalance handling optimise accuracy by predicting the majority class and miss the cases that matter. The imbalance is milder at the account level, where a single fraudulent account accounts for many transactions, and the two rates should not be conflated.
+  \item \textbf{Detection Without Workflow}: Much published work stops at producing a score~\cite{pourhabibi2020}, with no built-in path from a flagged account to an assigned, tracked and documented investigation.
+  \item \textbf{Disconnected Tooling}: Detection, alerting and case management typically live in separate systems with no shared data model, forcing manual re-entry between stages.
+\end{enumerate}
+
+\section{Proposed System}
+The proposed system treats the entire transaction history as a connected network of accounts and layers multiple complementary detection techniques over it. Its key design decisions are:
+
+\begin{itemize}
+  \item \textbf{A Transaction Graph as the Core Data Structure}: Accounts are modelled as nodes and transactions as directed, weighted edges in a NetworkX directed graph. Every subsequent analysis operates on this shared representation.
+  \item \textbf{A Transparent Rule Engine}: Six business-logic rules derived from standard anti-money-laundering typologies provide an explainable first detection pass that requires no training data and states a clear reason for every flag.
+  \item \textbf{Structural Graph Analysis}: PageRank identifies accounts that money concentrates into; degree centrality measures counterparty breadth; Louvain community detection isolates densely connected clusters; and cycle detection finds closed money loops characteristic of layering.
+  \item \textbf{Graph-Aware Feature Engineering}: Eleven transaction-level attributes are combined with six graph-derived attributes into a seventeen-feature vector per account, giving the machine learning models access to relational information they could not otherwise observe.
+  \item \textbf{Imbalance-Aware Machine Learning}: Each model family handles the rarity of fraud by its own mechanism. Random Forest is trained with \code{class\_weight="balanced"} and XGBoost with \code{scale\_pos\_weight}; Isolation Forest is unsupervised --- it never sees a label and is instead given a contamination parameter set to the observed fraud rate of the dataset (Section~\ref{sec:splits} explains why an estimate taken from the training partition alone is the sounder choice, and shows that the two give identical results here); the two graph neural networks use a cross-entropy loss weighted by inverse class frequency. These are four distinct mechanisms, not one, and they are set out in Table~\ref{tab:modelconfig}.
+  \item \textbf{Ring-Level Grouping}: Connected suspicious accounts are grouped into fraud rings using connected-component analysis with community-based splitting, and each member is assigned a role---main, source or withdrawal---reflecting its position in the money flow.
+  \item \textbf{An Integrated Investigation Workflow}: Alerts, fraud rings and investigation cases share one data model, so an analyst can move from a flagged account to a closed case without leaving the system.
+\end{itemize}
+
+\subsection{Advantages of Proposed System}
+\begin{enumerate}
+  \item \textbf{Detects Coordinated Fraud}: Because the graph is the primary data structure, patterns that span multiple accounts are detected directly rather than inferred from scattered individual alerts.
+  \item \textbf{Layered Defence}: A fraudster who evades the fixed thresholds of the rule engine still exposes an abnormal structural position to the graph analysis and the learned models.
+  \item \textbf{Relational Signal Available to the Models}: Six graph-derived measures are placed in the feature vector alongside the transaction-level aggregates, so structural position is available to the learned models rather than invisible to them. Whether those six features improve predictive performance is a separate question that this project does not answer: no ablation comparing models trained with and without them was run, and in the recorded XGBoost importances the graph-derived features are minor contributors (Section~\ref{sec:featimp}). The claim made here is that the information is represented, not that a measured gain has been demonstrated.
+  \item \textbf{Traceable Output}: Every alert records the specific rule violated or the model score that triggered it, and the graph metrics behind a score are readable quantities. The learned models themselves are not equally transparent, and Section~\ref{sec:advantages} separates the four kinds of explanation the system actually produces.
+  \item \textbf{Prioritised Analyst Attention}: Alerts carry a risk level and a fraud score, so the highest-risk cases surface first instead of competing with routine flags.
+  \item \textbf{Complete Audit Trail}: Every alert and case retains a creation timestamp, current status and final decision, supporting later review and accountability.
+  \item \textbf{Extensible Architecture}: Each detection stage is an independent module reading from and writing to the shared database, so a new rule, metric or model can be added without modifying the stages around it.
+\end{enumerate}

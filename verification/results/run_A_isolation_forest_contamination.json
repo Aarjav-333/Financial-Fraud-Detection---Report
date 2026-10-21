@@ -1,0 +1,34 @@
+{
+  "scikit_learn": "1.5.2",
+  "y_mean_as_committed": {
+    "contamination": 0.329,
+    "accuracy": 0.7064,
+    "precision": 0.5531,
+    "recall": 0.5572,
+    "f1": 0.5552,
+    "roc_auc": 0.7594,
+    "confusion_matrix_tn_fp_fn_tp": [
+      654,
+      185,
+      182,
+      229
+    ],
+    "test_flagged": 414
+  },
+  "y_train_mean_corrected": {
+    "contamination": 0.329067,
+    "accuracy": 0.7064,
+    "precision": 0.5531,
+    "recall": 0.5572,
+    "f1": 0.5552,
+    "roc_auc": 0.7594,
+    "confusion_matrix_tn_fp_fn_tp": [
+      654,
+      185,
+      182,
+      229
+    ],
+    "test_flagged": 414
+  },
+  "identical_predictions": true
+}

@@ -1,0 +1,41 @@
+% Figure 4.4 -- level-1 DFD: processes (rounded), data stores (open boxes), entities (shaded)
+\begin{tikzpicture}[
+  proc/.style={draw, thin, rounded corners=3pt, minimum width=2.45cm, minimum height=1.0cm,
+               align=center, font=\scriptsize, fill=gray!4},
+  store/.style={draw, thin, minimum width=2.45cm, minimum height=0.8cm, align=center, font=\scriptsize},
+  ent/.style={draw, thin, minimum width=1.9cm, minimum height=0.85cm, align=center,
+              font=\scriptsize, fill=gray!15},
+  lab/.style={font=\tiny, align=center, fill=white, inner sep=1pt},
+  arr/.style={-{Stealth[length=1.8mm]}, thin}]
+  % top row of processes and their stores
+  \node[proc] (p1) at (0,0)    {1.0\\Ingest \& validate};
+  \node[proc] (p2) at (4.4,0)  {2.0\\Rule evaluation};
+  \node[proc] (p3) at (8.8,0)  {3.0\\Graph analysis\\\& features};
+  \node[store] (d1) at (0,-1.9)   {D1\enspace accounts,\\transactions};
+  \node[store] (d2) at (4.4,-1.9) {D2\enspace rule\_hits};
+  \node[store] (d3) at (8.8,-1.9) {D3\enspace graph\_metrics,\\feature vectors};
+  % bottom row
+  \node[proc] (p6) at (0,-3.8)   {6.0\\Review, case\\\& reporting};
+  \node[proc] (p5) at (4.4,-3.8) {5.0\\Alerts \&\\ring assembly};
+  \node[proc] (p4) at (8.8,-3.8) {4.0\\Model scoring};
+  \node[store] (d4) at (4.4,-5.75) {D4\enspace alerts, rings,\\cases, status events};
+  % external entities
+  \node[ent] (fa) at (-3.7,-1.9) {Fraud\\Analyst};
+  \node[ent] (ah) at (-3.7,-4.6) {Account\\Holder};
+  % flows
+  \draw[arr] (p1) -- node[lab] {validated txns} (p2);
+  \draw[arr] (p2) -- node[lab] {flagged txns} (p3);
+  \draw[arr] (p1) -- node[lab] {write} (d1);
+  \draw[arr] (p2) -- node[lab] {write} (d2);
+  \draw[arr] (p3) -- node[lab] {write} (d3);
+  \draw[arr] (d1) -- node[lab] {read} (p6);
+  \draw[arr] (d2) -- node[lab] {read} (p5);
+  \draw[arr] (d3) -- node[lab] {read} (p4);
+  \draw[arr] (p4) -- node[lab] {fraud scores} (p5);
+  \draw[arr] (p5) -- node[lab] {alerts, rings} (p6);
+  \draw[arr] (p5) -- node[lab] {write} (d4);
+  \draw[arr] (d4.west) -- node[lab] {read} (p6.south east);
+  \draw[arr] (fa.north east) -- node[lab, sloped] {dataset} (p1.west);
+  \draw[arr] (p6.north west) -- node[lab, sloped] {case report} (fa.south east);
+  \draw[arr] (p6.west) -- node[lab, sloped] {status email} (ah.east);
+\end{tikzpicture}

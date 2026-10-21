@@ -1,0 +1,50 @@
+\chapter{Introduction}
+
+The rapid growth of digital payment systems, instant transfers and online banking has been accompanied by an equally rapid evolution in financial fraud. Fraud today is rarely a single suspicious transaction carried out by a lone actor; it is a coordinated effort distributed across many accounts that are deliberately structured to look ordinary when examined one at a time. A launderer rarely moves a large sum through a single transfer. Instead the amount is broken into smaller transactions and routed through a network of intermediate accounts---often called mule accounts---before being consolidated and withdrawn.
+
+Financial Fraud Detection Using Graph Machine Learning is a response to this shift. Rather than treating the transaction history as a flat list of independent events, the system models it as a \textbf{network}: customer accounts become \textbf{nodes} and transactions between them become \textbf{directed, weighted edges}. Once the data is represented this way, the structural fingerprints that coordinated fraud leaves behind---many accounts converging on a single collector, one account dispersing funds to many others, or money travelling in a closed loop---become measurable properties of the graph rather than patterns that a human must notice by eye.
+
+The design of the system prioritises three principles:
+
+\begin{enumerate}
+  \item \textbf{Explainability}: Every detection carries a reason, though the reasons are not all of the same kind. A rule hit names the business rule that was violated; a graph metric such as PageRank or degree centrality is itself a readable quantity; a classical model contributes a probability together with the global feature importances of the trained ensemble; and a graph neural network contributes a probability and nothing more, its learned node embeddings being opaque. Section~\ref{sec:advantages} sets out the distinction in full.
+  \item \textbf{Layering}: No single technique is relied upon. Transparent rules, structural graph analysis and learned models each cover the blind spots of the others, so that a fraudster who evades one layer is still exposed by the next.
+  \item \textbf{Actionability}: Detection is not the end of the process. Scores and rule hits are converted into alerts, alerts are grouped into fraud rings, and rings are carried through to a tracked investigation case with a documented final decision.
+\end{enumerate}
+
+The system is delivered as a full-stack web application. A FastAPI backend hosts the detection pipeline and exposes a REST API; a React single-page application provides the fraud analyst interface; and a SQLite database accessed through the SQLAlchemy ORM persists accounts, transactions, computed graph metrics, alerts and investigation cases.
+
+\section{Project Objectives}
+The work set out to achieve the following, each of which corresponds to a capability that is implemented and evaluated in this report:
+
+\begin{enumerate}
+  \item Represent a financial transaction history as a directed, weighted graph of accounts and transfers, rebuilt on demand from relational data.
+  \item Detect suspicious activity through a set of explicit, auditable fraud rules that state the reason for every flag.
+  \item Identify structurally suspicious accounts using established graph algorithms --- PageRank~\cite{page1999}, degree centrality, Louvain community detection~\cite{blondel2008} and cycle detection.
+  \item Engineer a per-account feature vector that combines transaction-level aggregates with graph-derived measures.
+  \item Train and evaluate supervised classifiers, an unsupervised anomaly detector, and two graph neural network architectures on that data.
+  \item Group connected suspicious accounts into candidate fraud rings and infer each member's role from the direction of money flow.
+  \item Provide an analyst interface that carries a detection through review, case management and reporting.
+  \item Measure detection effectiveness with metrics appropriate to a heavily imbalanced problem, on a labelled synthetic dataset and on an independent public benchmark.
+\end{enumerate}
+
+
+\section{Literature Survey}
+
+\subsection{Rule-Based and Transaction-Level Detection}
+Statistical and rule-based fraud detection has a long history; Bolton and Hand~\cite{bolton2002} survey the field and note early on that detection is hampered by extreme class imbalance, by the adversarial nature of the problem, and by the scarcity of labelled data. Threshold rules remain in widespread operational use because they are auditable and need no training data, but a fixed threshold is also predictable, and an adversary who can infer it can operate beneath it. Supervised models trained on transaction-level or account-level features relax that rigidity, yet when each record is scored from its own attributes the relationships between records are not available to the model.
+
+\subsection{Relationship-Aware and Graph-Based Detection}
+Graph-based anomaly detection addresses precisely that gap, and it is an established field rather than a novel one. Pourhabibi et al.~\cite{pourhabibi2020} review the literature systematically and classify approaches by graph type and detection strategy, concluding that structure-based methods detect organised fraud that feature-based methods miss, and that most published work stops at producing a score. Classical network measures provide the vocabulary: PageRank~\cite{page1999} identifies accounts into which value concentrates, and modularity-based community detection~\cite{blondel2008} isolates densely connected groups in near-linear time.
+
+\subsection{Graph Neural Networks}
+Graph neural networks learn a node representation from its neighbourhood rather than from hand-chosen measurements. Kipf and Welling's Graph Convolutional Network~\cite{kipf2017} applies a first-order approximation of spectral convolution, aggregating each node with its neighbours through the normalised adjacency matrix; it is transductive and weights all neighbours uniformly. GraphSAGE~\cite{hamilton2017} instead learns aggregator functions over sampled neighbourhoods, which allows it to generalise to nodes unseen during training. Cheng et al.~\cite{cheng2025} survey the application of these architectures to financial fraud and identify class imbalance and deliberate camouflage as the dominant open problems. Dou et al.~\cite{dou2020} address the second directly: their CARE-GNN model selects which neighbours to aggregate, because a fraudster who transacts with many legitimate counterparties can otherwise dilute their own signal under uniform aggregation.
+
+\subsection{Datasets and Benchmarking}
+Labelled financial transaction graphs are rarely public. The Elliptic Bitcoin dataset~\cite{weber2019} is the most widely used open benchmark: roughly 203,000 transaction nodes with anonymised features and a temporal split. Its authors found that a Random Forest on engineered features was a strong baseline and that graph convolution helped chiefly where local features were weak. Because its features are anonymised and its nodes are transactions rather than accounts, results on it are not directly comparable with results on an account-level graph --- a limitation this report observes when reporting its own figures in Chapter~\ref{ch:results}.
+
+\subsection{Position of This Work}
+This project does not introduce a new detection algorithm, and it does not claim to originate graph-based fraud detection. Its contribution is one of integration: it combines a transparent rule layer, classical graph analytics, supervised and unsupervised models, and two graph neural network architectures over a single shared graph, and --- addressing the gap Pourhabibi et al.~\cite{pourhabibi2020} identify --- carries the output through ring assembly, analyst confirmation with an audit trail, case management and reporting, so that a detection ends in a recorded decision rather than in a score.
+
+\section{Report Organisation}
+The remaining chapters are organised as follows. Chapter~2 defines the problem and motivates the proposed approach. Chapter~3 presents the requirement analysis. Chapter~4 covers the design and implementation. Chapter~5 discusses the coding choices and presents key code snippets. Chapter~6 describes the testing and validation strategy and its results. Chapter~7 presents experimental results, advantages and limitations. Chapter~8 concludes the report and outlines future enhancements.

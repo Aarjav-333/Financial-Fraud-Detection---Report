@@ -1,0 +1,77 @@
+% Figure 4.2 -- UML use case diagram.
+% Roles and permissions follow backend/app/deps.py (FRAUD_ANALYST_ROLES = admin, analyst;
+% require_fraud_analyst) and the routers that use it: app/api/investigation.py (whole
+% router), app/api/notifications.py and GET /api/gnn/evaluation. The holder email is
+% queued only by a confirmation (app/services/fraud_review.py -> mailer.queue_fraud_confirmation).
+\tikzset{
+  uc/.style={ellipse, draw, thick, fill=white, minimum width=5.1cm, minimum height=1.05cm,
+             inner sep=0pt, align=center, font=\small},
+  ucr/.style={uc, fill=gray!12},
+  assoc/.style={thin},
+  dep/.style={dashed, -{Stealth[length=2.4mm]}, thin},
+  gen/.style={-{Triangle[open, length=3mm, width=3mm]}, thin},
+  pics/actor/.style={code={
+    \draw[thick] (0,0.62) circle (0.17);
+    \draw[thick] (0,0.45) -- (0,-0.05);
+    \draw[thick] (-0.32,0.28) -- (0.32,0.28);
+    \draw[thick] (0,-0.05) -- (-0.26,-0.50);
+    \draw[thick] (0,-0.05) -- (0.26,-0.50);
+  }},
+}
+\begin{tikzpicture}[x=1cm,y=1cm]
+  % system boundary
+  \draw[thick] (3.10,0.30) rectangle (13.75,14.40);
+  \node[anchor=north, font=\small\bfseries] at (8.42,14.30) {Fraud Detection System};
+
+  % actors
+  \pic at (1.05,11.25) {actor};
+  \node[font=\small] at (1.05,10.40) {Viewer};
+  \coordinate (V) at (1.45,11.40);
+  \pic at (1.05,4.55) {actor};
+  \node[font=\small, align=center] at (0.85,3.12) {Fraud Analyst /\\Administrator};
+  \coordinate (A) at (1.40,4.83);
+  \pic at (15.05,4.95) {actor};
+  \node[font=\small, align=center] at (15.05,3.95) {Account\\Holder};
+  \coordinate (H) at (14.65,5.10);
+
+  % actor generalisation: Fraud Analyst / Administrator inherits every Viewer use case
+  \draw[gen] (1.05,5.35) -- (1.05,10.10);
+
+  % use cases available to every signed-in role
+  \node[uc] (u1) at (6.35,13.10) {Browse accounts,\\transactions, graph metrics};
+  \node[uc] (u2) at (6.35,11.80) {Run detection stages\\(rules, graph, models)};
+  \node[uc] (u3) at (6.35,10.50) {Review alerts and\\fraud rings};
+  \node[uc] (u4) at (6.35,9.20)  {Manage investigation\\cases, export reports};
+
+  % use cases restricted to admin / analyst by require_fraud_analyst
+  \node[ucr] (u5) at (6.35,7.60) {Open account\\investigation};
+  \node[ucr] (u6) at (6.35,6.30) {Mark account\\under review};
+  \node[ucr] (u7) at (6.35,5.00) {Confirm fraud};
+  \node[ucr] (u8) at (6.35,3.70) {Clear account\\(reason required)};
+  \node[ucr] (u9) at (6.35,2.40) {Receive real-time\\fraud notifications};
+  \node[ucr] (u10) at (6.35,1.10) {View model analytics\\(GNN evaluation)};
+
+  % included use case
+  \node[uc, minimum width=3.3cm, minimum height=1.05cm] (n) at (11.85,5.00) {Notify account\\holder by email};
+
+  % associations (behind the use cases)
+  \begin{scope}[on background layer]
+    \foreach \u in {u1,u2,u3,u4} \draw[assoc] (V) -- (\u.west);
+    \foreach \u in {u5,u6,u7,u8,u9,u10} \draw[assoc] (A) -- (\u.west);
+    \draw[assoc] (n.east) -- (H);
+  \end{scope}
+
+  % <<include>>: every effective confirmation queues exactly one holder email
+  \draw[dep] (u7.east) -- node[above, font=\footnotesize, inner sep=2pt]
+        {\guillemotleft include\guillemotright} (n.west);
+
+  % UML note (folded corner)
+  \node[font=\footnotesize, text width=3.35cm, align=left, inner sep=4pt] (note) at (11.70,2.25)
+        {Queued in the same database transaction as the confirmation; sent if the
+         holder has a usable address, otherwise logged as skipped. Clearing an
+         account sends no email.};
+  \draw[thin] (note.north west) -- ([xshift=-7pt]note.north east) -- ([yshift=-7pt]note.north east)
+              -- (note.south east) -- (note.south west) -- cycle;
+  \draw[thin] ([xshift=-7pt]note.north east) |- ([yshift=-7pt]note.north east);
+  \draw[dashed, thin] (note.north -| n.south) -- (n.south);
+\end{tikzpicture}

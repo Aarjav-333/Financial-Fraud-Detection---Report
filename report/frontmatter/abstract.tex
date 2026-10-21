@@ -1,0 +1,19 @@
+% Abstract
+\phantomsection\addcontentsline{toc}{chapter}{Abstract}
+\begin{center}
+\vspace*{-0.55cm}
+{\large\bfseries Abstract\par}
+\end{center}
+\vspace{10pt}
+
+Financial fraud is rarely the act of a single account. Funds are divided into small transfers and routed through intermediate accounts, so that each transaction appears unremarkable when examined on its own. Detection methods that score transactions or accounts in isolation are, by construction, unable to use the relationships between them.
+
+This project implements a fraud detection system that represents the transaction history as a \textbf{directed, weighted graph} in which customer accounts are nodes and transfers are edges, and layers several detection techniques over that representation. A \textbf{rule engine} applies six deterministic checks derived from common anti-money-laundering typologies and records, for every flagged transaction, which rule fired. A \textbf{graph analysis module} built on NetworkX computes PageRank~\cite{page1999}, degree centrality, Louvain community membership~\cite{blondel2008} and cycle membership for each account. A \textbf{feature engineering} stage combines eleven transaction-level aggregates with six graph-derived measures into a seventeen-feature vector per account. Three classical models are trained on that matrix --- Random Forest~\cite{breiman2001} and XGBoost~\cite{chen2016} as supervised classifiers, and Isolation Forest~\cite{liu2008} as an unsupervised anomaly detector --- and two graph neural networks, a Graph Convolutional Network~\cite{kipf2017} and GraphSAGE~\cite{hamilton2017}, are trained on the account graph itself. Connected groups of suspicious accounts are assembled into \textbf{fraud rings} with member roles inferred from money flow, and each ring or alert can be escalated into a tracked \textbf{investigation case}. The analyst interface is a React single-page application served by a FastAPI backend over a SQLite database accessed through the SQLAlchemy ORM.
+
+Evaluation uses a synthetic dataset of 5,000 accounts and 80,000 transactions with planted fraud structures, which provides complete ground truth. On that dataset the rule engine recovered 96.21\% of fraudulent transactions at 99.88\% precision; XGBoost reached an F1 score of 0.825 and GraphSAGE 0.839 on held-out accounts; and 52 fraud rings were assembled with 96.8\% of their members genuinely fraudulent. The graph neural networks were additionally evaluated on the public Elliptic Bitcoin dataset~\cite{weber2019}, where GraphSAGE reached an F1 score of 0.549 under the dataset's temporal split.
+
+Because the primary dataset is synthetic and its fraud structures were planted by its own generator, these figures measure internal consistency rather than performance on live banking data; the system is a working prototype and is not presented as production-ready. The report documents the requirement analysis, design, implementation, testing and evaluation of the system, and states its limitations explicitly in Chapter~7.
+
+\vspace{10pt}
+\noindent\textbf{Keywords:} Graph Machine Learning, Financial Fraud Detection, NetworkX, PageRank, Community Detection, Fraud Rings, XGBoost, Feature Engineering, FastAPI, React
+\clearpage

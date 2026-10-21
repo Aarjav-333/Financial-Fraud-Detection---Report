@@ -1,0 +1,29 @@
+% Figure 4.5 -- detection pipeline; solid = operational path, dashed = optional GNN branch
+\begin{tikzpicture}[
+  st/.style={draw, thin, minimum width=7.4cm, minimum height=0.78cm, align=center, font=\small,
+             inner sep=2pt},
+  opt/.style={draw, thin, dashed, minimum width=3.6cm, minimum height=0.78cm, align=center,
+              font=\scriptsize, inner sep=2pt},
+  arr/.style={-{Stealth[length=2mm]}, thin},
+  node distance=0.42cm]
+  \node[st] (s1) {Transaction Dataset\\(CSV Upload / Synthetic Seed)};
+  \node[st, below=of s1] (s2) {Validation \& Persistence\\(SQLAlchemy ORM $\rightarrow$ SQLite)};
+  \node[st, below=of s2] (s3) {Rule Engine (six AML business rules R1--R6)};
+  \node[st, below=of s3] (s4) {Graph Construction\\(NetworkX directed, weighted graph)};
+  \node[st, below=of s4] (s5) {Graph Analysis\\(PageRank, centrality, communities, cycles)};
+  \node[st, below=of s5] (s6) {Feature Engineering\\(17-feature vector per account)};
+  \node[st, below=of s6] (s7) {ML Scoring\\(Random Forest / XGBoost / Isolation Forest)};
+  \node[st, below=of s7] (s8) {Alert Generation (rule hits + high model scores)};
+  \node[st, below=of s8] (s9) {Fraud Ring Assembly\\(community \& cycle grouping, role assignment)};
+  \node[st, below=of s9] (s10) {Analyst Review (under review / confirm / clear, audited)};
+  \node[st, below=of s10] (s11) {Case, Holder Email (on confirmation),\\Real-Time Alerts \& PDF Report};
+  \foreach \a/\b in {s1/s2,s2/s3,s3/s4,s4/s5,s5/s6,s6/s7,s7/s8,s8/s9,s9/s10,s10/s11}
+    \draw[arr] (\a) -- (\b);
+  % re-train loop
+  \draw[arr] (s7.west) -- ++(-0.45,0) |- node[pos=0.25, left, font=\scriptsize] {re-train} (s6.west);
+  % optional GNN branch
+  \node[opt, right=0.55cm of s6] (g1) {GNN Training \& Scoring\\(GCN / GraphSAGE)\\\textit{optional, run separately}};
+  \node[opt, right=0.55cm of s7, yshift=-0.25cm] (g2) {GNN Evaluation View\\(metrics and curves only)};
+  \draw[arr, dashed] (s6.east) -- (g1.west);
+  \draw[arr, dashed] (g1.south) -- (g2.north);
+\end{tikzpicture}

@@ -1,0 +1,15 @@
+% Figure 4.3 -- context-level DFD (level 0)
+\begin{tikzpicture}[
+  ent/.style={draw, thin, minimum width=2.3cm, minimum height=1.05cm, align=center, font=\small},
+  lab/.style={font=\scriptsize, align=center},
+  arr/.style={-{Stealth[length=2mm]}, thin}]
+  \node[circle, draw, thin, minimum size=3.1cm, align=center, font=\small] (s) at (0,0)
+       {\textbf{0}\\[2pt]Fraud\\Detection\\System};
+  \node[ent] (fa) at (-5.6,0) {Fraud\\Analyst};
+  \node[ent] (ad) at (5.6,2.0) {Administrator};
+  \node[ent] (ah) at (5.6,-2.0) {Account\\Holder};
+  \draw[arr] ([yshift=4pt]fa.east) -- node[lab, above] {transaction data,\\review decisions} ([yshift=4pt]s.west);
+  \draw[arr] ([yshift=-4pt]s.west) -- node[lab, below] {alerts, rings,\\cases, reports} ([yshift=-4pt]fa.east);
+  \draw[arr] (ad.west) -- node[lab, above, sloped] {credentials, role} (s.north east);
+  \draw[arr] (s.south east) -- node[lab, below, sloped] {fraud confirmation notice} (ah.west);
+\end{tikzpicture}
