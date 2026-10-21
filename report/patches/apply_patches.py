@@ -149,6 +149,12 @@ for l in moved:
 link(pg, "Table 7.6", 70, every=False)
 link(pg, "Section 7.2.6", 68)
 
+# P9 -- Declaration (front matter, PDF page 2): the whole page is re-typeset; the page
+# object is kept (redact + overlay rather than a page swap) so the outline stays valid
+pg = doc[1]
+redact(pg, pg.rect, graphics=True)
+pg.show_pdf_page(pg.rect, P, 8)
+
 # Outline: the bookmarks of the input may point at named destinations that no longer
 # resolve after earlier page swaps, so rebuild them with explicit page numbers taken from
 # a PDF whose outline is intact (the originally uploaded report has the same pagination).
