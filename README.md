@@ -6,7 +6,7 @@ Applications**.
 
 - **Student:** Aarjav Oravakandi (TVE25MCA-2002)
 - **Department:** Department of Computer Applications, College of Engineering Trivandrum
-- **Supervisor:** Dr. Liji P I, Assistant Professor
+- **Supervisor:** Dr. Liji P I, Professor
 - **Head of the Department:** Dr. Haripriya A P
 - **Submission:** November 2026
 

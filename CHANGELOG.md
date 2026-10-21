@@ -1,5 +1,12 @@
 # Changelog
 
+## Designation update — 21 October 2026
+
+- Dr. Liji P I's designation changed from "Assistant Professor" to
+  "Professor" wherever it appears: the Declaration (page 2) and the
+  Acknowledgment (page 4) of the FINAL PDF, the corresponding LaTeX sources and
+  the README. Nothing else changed.
+
 ## Declaration update — 21 October 2026
 
 - Page 2 (Declaration): the project title is set in bold, and the supervision
