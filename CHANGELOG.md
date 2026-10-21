@@ -1,5 +1,48 @@
 # Changelog
 
+## Diagram and wording corrections — 21 October 2026
+
+Applied to the 78-page submission copy on `main` (with the HOD, Principal and
+Dr. Liji P I acknowledgment changes already in it). Only the regions below
+changed; the other 70 pages are textually identical.
+
+- **Figure 4.2 (p. 22), use case diagram — redrawn.** *Confirm fraud* and
+  *Clear account* are separate use cases. `«include»` runs only from *Confirm
+  fraud* to *Notify account holder by email*, because `fraud_review.py` queues
+  the email (via `mailer.queue_fraud_confirmation`) only when an account becomes
+  Confirmed Fraud. A note records that delivery depends on a usable address and
+  that clearing sends nothing. The Account Holder is a secondary actor only. The
+  Viewer role (`ROLES` in `scripts/create_user.py`) is shown, with the Fraud
+  Analyst / Administrator as its specialisation; the shaded use cases are those
+  guarded by `require_fraud_analyst`.
+- **Section 4.3 (p. 21)** rewritten to explain the diagram as implemented.
+- **Section 4.7.1 (p. 29):** "guards exactly three capabilities" replaced by
+  the routes it actually guards — the investigation routes (record, review
+  status, holder-email retry), notifications and model analytics.
+- **Figure 4.1 (p. 18), architecture.** The detection layer shows the
+  operational path Rule Engine → Graph Analysis → Feature Engineering → ML
+  Scoring, with GNN training and evaluation as a dashed, optional branch that
+  alert generation does not use (matching Figure 4.5, `app/api/gnn.py` and
+  `app/ml/alerts.py`).
+- **Figure 4.10 (p. 33) caption and its List of Figures entry:** now describe a
+  static screenshot. Arrowheads show direction; the moving dots
+  (`linkDirectionalParticles` in `MoneyFlowGraph.jsx`) exist only in the
+  running application. The feeder / mule / collector / shell / cash-out
+  description is kept.
+- **Section 7.2.7 (p. 59) opening:** no longer claims that everything is
+  reproducible; it points to the stored result files of Table 7.6 and states
+  that the 22-second runtime is an informal observation. The rest of the page
+  moves down one line.
+- **Section 7.2.6 (p. 58):** "the one result in this chapter that cannot be
+  independently reproduced" replaced by a statement that the runtime, unlike the
+  results recorded in Table 7.6, has no stored record.
+- **Bookmarks repaired.** The PDF outline on `main` resolved to page −1 after
+  the earlier page swaps; it now has explicit page numbers again (88 entries,
+  identical to the original upload).
+
+Not changed, by request: the Isolation Forest description and Table 7.5's
+evaluated-commit row.
+
 ## Name update — 21 October 2026
 
 - Head of the Department (and project supervisor, as the report already

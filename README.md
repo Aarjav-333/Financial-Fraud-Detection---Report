@@ -18,8 +18,9 @@ GraphSAGE, fraud-ring assembly and an analyst investigation workflow over it.
 
 | Path | Contents |
 |---|---|
-| `Financial_Fraud_Detection_GraphML_Project_Report_TVE25MCA-2002 - FINAL.pdf` | The final compiled report |
-| `report/main.tex` | Main LaTeX file (preamble, page style, document order) |
+| `Financial_Fraud_Detection_GraphML_Project_Report_TVE25MCA-2002 - FINAL.pdf` | **The submission copy** (78 pages) — see below |
+| `report/patches/` | Sources of the targeted corrections applied to the submission copy |
+| `report/main.tex`, `report/preamble.tex` | Full LaTeX edition (79 pages; document order / shared preamble) |
 | `report/frontmatter/` | Title page, declaration, certificate, acknowledgment, abstract |
 | `report/chapters/` | Chapters 1–8, one file each |
 | `report/bibliography.tex` | The 18 numbered references |
@@ -28,7 +29,32 @@ GraphSAGE, fraud-ring assembly and an analyst investigation workflow over it.
 | `verification/` | Scripts, outputs and environment of the final verification re-run (Section 7.2.7) |
 | `CHANGELOG.md` | Summary of the final revision |
 
-## Building the PDF
+## Which PDF is which
+
+The **submission copy** is the 78-page report chosen by the author. It is not
+compiled from `report/main.tex`: the latest corrections (Figures 4.1 and 4.2,
+the Figure 4.10 caption and its List of Figures entry, Sections 4.3, 4.7.1,
+7.2.6 and 7.2.7) were typeset as fragments in `report/patches/patches.tex`,
+with the same preamble, and placed over the corresponding regions of that PDF
+by `report/patches/apply_patches.py`. Every other page is unchanged. To
+regenerate it, run from `report/`:
+
+```bash
+latexmk -xelatex -outdir=patches patches/patches.tex
+git show "5649fd6:Financial_Fraud_Detection_GraphML_Project_Report_TVE25MCA-2002 - FINAL.pdf" > base.pdf
+git show "5df4e8a:Financial_Fraud_Detection_GraphML_Project_Report_TVE25MCA-2002 - FINAL.pdf" > outline.pdf
+python3 patches/apply_patches.py base.pdf patches/patches.pdf FINAL-new.pdf outline.pdf
+```
+
+(PyMuPDF ≥ 1.24. `base.pdf` is the submission copy before these corrections;
+`outline.pdf`, the originally uploaded report, supplies the bookmarks — it has
+the same pagination.)
+
+`report/main.tex` builds a fuller 79-page edition that also carries the
+corrections described in `CHANGELOG.md` under "Final revision" (Isolation
+Forest provenance, reproducibility evidence table, faithful code listings).
+
+## Building the full LaTeX edition
 
 Requires TeX Live 2023 or later with XeLaTeX and `latexmk`, and the
 Liberation fonts (`fonts-liberation` on Debian/Ubuntu). Packages used:

@@ -1,13 +1,49 @@
-% Figure 4.1 -- high-level system architecture (layers top to bottom)
+% Figure 4.1 -- high-level system architecture (layers top to bottom).
+% The detection layer shows the operational path (rules -> graph -> features -> classical
+% models, which feed alert generation) and the GNN as a separate, optional branch: per
+% app/api/gnn.py it exposes only train / status / evaluation, and app/ml/alerts.py never
+% reads a GNN score (see also Figure 4.5).
 \begin{tikzpicture}[
-  layer/.style={draw, thin, minimum width=12.4cm, minimum height=0.62cm, align=center,
-                font=\footnotesize, inner sep=3pt},
-  arr/.style={-{Stealth[length=2mm]}, thin}]
-  \node[layer] (c) {Client Layer: React + Vite SPA \quad$|$\quad Material UI \quad$|$\quad REST Client};
-  \node[layer, below=0.38cm of c] (a) {Authentication Layer: \texttt{/api/auth} --- OAuth2 password flow, JWT bearer\\token, \texttt{get\_current\_user} dependency guarding every protected router};
-  \node[layer, below=0.38cm of a] (g) {API Gateway (FastAPI), 18 routers: \texttt{/accounts /transactions}\\\texttt{/preprocessing /rules /graph /features /ml /gnn /alerts /rings}\\\texttt{/cases /dashboard /reports /notifications /system /demo}};
-  \node[layer, below=0.38cm of g] (d) {Detection Pipeline: Rule Engine $\rightarrow$ Graph Analysis $\rightarrow$ Feature Engineering\\$\rightarrow$ ML Scoring $\rightarrow$ GNN (optional)};
-  \node[layer, below=0.38cm of d] (b) {Backend Services: NetworkX Graph \quad Model Store \quad Alert \& Ring Builder\\Analyst Review \quad Notifier \& Mailer \quad Report Generator};
-  \node[layer, below=0.38cm of b] (p) {Persistence Layer: SQLite via SQLAlchemy ORM};
+  layer/.style={draw, thin, minimum width=14.0cm, align=center, font=\small, inner sep=3pt},
+  stage/.style={draw, thin, rounded corners=1.5pt, font=\small, inner sep=2.5pt, fill=white},
+  opt/.style={draw, thin, dashed, rounded corners=1.5pt, font=\footnotesize, align=center,
+              inner sep=3pt, fill=white},
+  arr/.style={-{Stealth[length=2mm]}, thin},
+  darr/.style={-{Stealth[length=2mm]}, thin, dashed}]
+  % layer boxes (fixed heights so the stack keeps the original proportions)
+  \node[layer, minimum height=0.62cm] (c) at (0,0)
+     {Client Layer: React + Vite SPA \quad$|$\quad Material UI \quad$|$\quad REST Client};
+  \node[layer, minimum height=1.02cm, below=0.27cm of c] (a)
+     {Authentication Layer: \texttt{/api/auth} --- OAuth2 password flow, JWT bearer\\
+      token, \texttt{get\_current\_user} dependency guarding every protected router};
+  \node[layer, minimum height=1.30cm, below=0.27cm of a] (g)
+     {API Gateway (FastAPI), 18 routers: \texttt{/accounts /transactions}\\
+      \texttt{/preprocessing /rules /graph /features /ml /gnn /alerts /rings}\\
+      \texttt{/cases /dashboard /reports /notifications /system /demo}};
+  \node[layer, minimum height=2.55cm, below=0.27cm of g] (d) {};
+  \node[layer, minimum height=1.02cm, below=0.27cm of d] (b)
+     {Backend Services: NetworkX Graph \quad Model Store \quad Alert \& Ring Builder\\
+      Analyst Review \quad Notifier \& Mailer \quad Report Generator};
+  \node[layer, minimum height=0.62cm, below=0.27cm of b] (p)
+     {Persistence Layer: SQLite via SQLAlchemy ORM};
+
+  % detection layer contents: operational path ...
+  \node[font=\small, anchor=north] (dl) at ([yshift=-3pt]d.north)
+     {Detection Pipeline --- operational path (feeds alert generation):};
+  \coordinate (row) at ([yshift=-0.98cm]d.north);
+  \node[stage, anchor=west] (s1) at ([xshift=-5.70cm]row) {Rule Engine};
+  \node[stage, right=0.42cm of s1] (s2) {Graph Analysis};
+  \node[stage, right=0.42cm of s2] (s3) {Feature Engineering};
+  \node[stage, right=0.42cm of s3] (s4) {ML Scoring};
+  \draw[arr] (s1) -- (s2);
+  \draw[arr] (s2) -- (s3);
+  \draw[arr] (s3) -- (s4);
+  % ... and the optional GNN branch, which nothing downstream consumes
+  \node[opt, anchor=north] (gnn) at ([yshift=-1.52cm]d.north)
+     {\textit{Optional, run separately:} GNN training \& evaluation (GCN / GraphSAGE);\\
+      results shown in Model Analytics only --- not used by alert generation};
+  \draw[darr] (s3.south) -- (s3.south |- gnn.north);
+
+  % layer-to-layer flow
   \foreach \x/\y in {c/a,a/g,g/d,d/b,b/p} \draw[arr] (\x) -- (\y);
 \end{tikzpicture}

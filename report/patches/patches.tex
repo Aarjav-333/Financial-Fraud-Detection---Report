@@ -1,0 +1,57 @@
+% Replacement fragments for the authoritative 78-page FINAL.pdf.
+% Each page holds one fragment; patches/apply_patches.py cuts it out and places it over
+% the region it replaces. Build from report/:
+%   latexmk -xelatex -outdir=patches patches/patches.tex
+%   python3 patches/apply_patches.py "<input FINAL.pdf>" patches/patches.pdf "<output.pdf>"
+% Page numbers in the comments are printed page numbers of the report.
+\documentclass[12pt,a4paper,oneside]{report}
+\input{preamble}
+\begin{document}
+\pagestyle{empty}
+
+% ---------------------------------------------------------------- P1: Figure 4.1 (p. 18)
+\begin{center}\diagram{architecture}\end{center}
+\clearpage
+
+% ---------------------------------------------------------------- P2: Section 4.3 text (p. 21)
+\noindent Figure 4.2 shows the principal use cases, read from the implementation. The application defines three roles --- \code{admin}, \code{analyst} and \code{viewer} --- but only two permission sets: \code{FRAUD\_ANALYST\_ROLES} in \code{app/deps.py} treats \code{admin} and \code{analyst} identically, so they are drawn as a single actor, the Fraud Analyst / Administrator. Every protected route requires a signed-in user, and a second dependency, \code{require\_fraud\_analyst}, restricts the shaded use cases to that actor: opening an account's investigation record, changing its review status --- marking it under review, confirming fraud or clearing it --- receiving real-time fraud notifications, and viewing the graph-neural-network evaluation on the Model Analytics page. The same restriction covers retrying a failed holder email, which is omitted from the diagram for brevity.
+
+A viewer may therefore browse accounts, transactions and graph metrics, run every detection stage, review alerts and fraud rings, and work investigation cases and reports, but cannot use any shaded use case: the interface hides the Model Analytics and Notifications pages from that role, and the API returns 403 if a restricted route is called directly. Because the analyst can do everything a viewer can, the Fraud Analyst / Administrator is drawn as a specialisation of the Viewer actor.
+
+Confirming fraud and clearing an account are separate use cases because they behave differently. An effective confirmation always records exactly one account-holder email in the same database transaction (Section 4.2.4), so \textit{Confirm fraud} \guillemotleft include\guillemotright s \textit{Notify account holder by email}; whether that email is actually delivered depends on the address on file, as the attached note records. Clearing an account requires a reason and sends no email, so it has no relationship with the notification. The Account Holder is not a user of the system and initiates none of these actions: they appear only as the secondary actor who receives the notice.
+\clearpage
+
+% ---------------------------------------------------------------- P3: body of p. 22
+\setcounter{chapter}{4}\setcounter{section}{3}\setcounter{figure}{1}
+\begin{figure}[H]
+\centering
+\resizebox{\textwidth}{!}{\diagram{usecase}}
+\caption{Use Case Diagram}
+\end{figure}
+
+\section{Context and Data Flow Diagrams}
+Figure 4.3 shows the system boundary. Figure 4.4 decomposes it into the major processes and the data stores they read and write. The detection pipeline itself is shown separately, as a processing flowchart, in Figure 4.5.
+\clearpage
+
+% ---------------------------------------------------------------- P4: Section 4.7.1, 2nd paragraph (p. 29)
+A second dependency, \code{require\_fraud\_analyst}, restricts the sensitive routes to accounts whose role is \code{admin} or \code{analyst} and returns 403 otherwise. It guards the investigation routes --- an account's investigation record, its review status and holder-email retries --- together with the fraud notifications and the model performance analytics. The notification stream cannot send an \code{Authorization} header, so it authenticates by token in the query string and the server closes the stream when that token expires.
+\clearpage
+
+% ---------------------------------------------------------------- P5: Figure 4.10 caption (p. 33)
+\setcounter{chapter}{4}\setcounter{figure}{9}
+\captionof{figure}{Fraud Network Visualization --- static screenshot of the interactive transaction graph for the scripted twenty-two-account scenario of Section 4.2.5: the feeders, the mule and collector, the two shell accounts and the nine cash-out accounts, coloured by role. Arrowheads mark the direction of money flow; in the running application, dots also move along the edges.}
+\clearpage
+
+% ---------------------------------------------------------------- P6: List of Figures entry 4.10
+\makeatletter
+\contentsline{figure}{\numberline{4.10}Fraud Network Visualization --- static screenshot of the interactive transaction graph for the scripted twenty-two-account scenario of Section 4.2.5, with accounts coloured by role; in the running application, moving dots along the edges show the direction of money flow}{33}{}
+\makeatother
+\clearpage
+
+% ---------------------------------------------------------------- P7: Section 7.2.6, 1st paragraph (p. 58)
+\noindent A single run of the detection pipeline --- rule evaluation, graph construction and analysis, feature engineering, classical model training and scoring, alert generation and ring assembly --- over the full transaction set completed in approximately 22 seconds on the CPU-only laptop described above. \textbf{This figure should be treated with more caution than any other number in this chapter.} It is a single informal observation taken from the application's own stage display, not an averaged benchmark. The pipeline does not persist its timings, so no stored artefact exists against which the figure can be checked, and it was not possible to establish from the repository whether it was measured before or after the demonstration records were added. It is reported because it is the only end-to-end timing available; unlike the results recorded in the artefacts of Table 7.6, it has no stored record and cannot be independently checked.
+\clearpage
+
+% ---------------------------------------------------------------- P8: Section 7.2.7, opening (p. 59)
+\noindent The principal results in this chapter were produced with the implementation and procedures documented below and are read from the stored result files listed in Table 7.6. The 22-second runtime of Section 7.2.6 is an informal observation and cannot be reproduced.
+\end{document}
