@@ -185,6 +185,12 @@ for i, pg in enumerate(doc):
 assert footers == 67, footers
 print(f"footers extended: {footers}")
 
+# P12 -- Acknowledgment (front matter, PDF page 4): the whole page is re-typeset; the page
+# object is kept (redact + overlay) so the outline stays valid
+pg = doc[3]
+redact(pg, pg.rect, graphics=True)
+pg.show_pdf_page(pg.rect, P, 11)
+
 # Outline: the bookmarks of the input may point at named destinations that no longer
 # resolve after earlier page swaps, so rebuild them with explicit page numbers taken from
 # a PDF whose outline is intact (the originally uploaded report has the same pagination).
