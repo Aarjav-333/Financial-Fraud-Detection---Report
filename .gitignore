@@ -1,5 +1,6 @@
 # LaTeX build output (the compiled report is copied to the repository root)
 report/main.pdf
+report/patches/patches.pdf
 *.aux
 *.log
 *.toc
